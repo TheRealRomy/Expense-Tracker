@@ -168,27 +168,22 @@ last_day_of_month = (start_date.replace(day=1, month=start_date.month + 1) - tim
 text_to_display = ""
 
 new_workbook = load_workbook(file_path)
-new_worksheet = new_workbook["Sheet"]
+new_worksheet = new_workbook.active
 item_column = new_worksheet["A"]
 number_of_items = 0
 price_column = new_worksheet["B"]
 total_price = 0
-column_letter = 'A'
-
 
 if start_date.day == last_day_of_month:
-    number_of_items = (sum(1 for cell in item_column if cell.value is not None)) - 2
-    column_letter = 'A'
-    column = new_worksheet[column_letter]
+    number_of_items = sum(1 for cell in item_column if cell.value is not None) - 2
 
-    column_sum = 0
-    for cell in column:
+    for cell in price_column[2:]:
         if isinstance(cell.value, (int, float)):
-            column_sum += cell.value
+            total_price += cell.value
 
-    text_to_display = f"By the end of the month, {start_date}, you bought {number_of_items} items and spent ₱{column_sum} within this month."
+    text_to_display = f"By the end of the month ({start_date}), you bought {number_of_items} items and spent ₱{total_price} within this month."
 else:
-    text_to_display = "It's not end of the month yet."
+    text_to_display = "It's not the end of the month yet."
 
 text_label = ctk.CTkLabel(master=report_frame, text=text_to_display, wraplength=340, justify="center")
 text_label.pack(pady=10, padx=13)
