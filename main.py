@@ -22,34 +22,7 @@ def on_button_click():
     selected_date = date_combobox.get()
 
     if item_name and item_price and selected_date != "Select Date":
-        workbook = load_workbook(file_path) if os.path.exists(file_path) else Workbook()
-        sheet = workbook.active
-
-
-        last_row = sheet.max_row
-
-        if last_row >= 3:
-            sheet.delete_rows(last_row)
-
-        total_items = last_row - 2
-
-        total_price = sum(
-            float(sheet.cell(row=row_num, column=2).value)
-            for row_num in range(2, last_row)
-            if sheet.cell(row=row_num, column=2).value is not None
-        )
-
-        sheet.insert_rows(2)
-
-        sheet.cell(row=2, column=1).value = item_name
-        sheet.cell(row=2, column=2).value = item_price
-        sheet.cell(row=2, column=3).value = selected_date
-
-        # Create a new footer with the updated values
-        sheet.cell(row=last_row + 1, column=1).value = f"Total items: {total_items}"
-        sheet.cell(row=last_row + 1, column=2).value = f"Total price: {total_price}"
-
-        workbook.save(file_path)
+        
 
         message_label.configure(text="Information noted!")
         main_window.after(2000, lambda: message_label.configure(text=""))
@@ -72,20 +45,11 @@ if os.path.exists(file_path):
     headers = ["Item", "Price in ₱", "Date of Purchase"]
     existing_headers = [sheet.cell(row=1, column=col_num).value for col_num in range(1, sheet.max_column + 1)]
 
-    if existing_headers != headers:
-        sheet.delete_rows(1)
-        for col_num, header in enumerate(headers, start=1):
-            sheet.cell(row=1, column=col_num).value = header
-
-        footer_labels = ["Total items: ", "Total price: "]
-        for col_num, label in enumerate(footer_labels, start=1):
-            sheet.cell(row=3, column=col_num).value = label
-
-        sheet.column_dimensions["A"].width = 30
-        sheet.column_dimensions["B"].width = 30
-        sheet.column_dimensions["C"].width = 30
-
-        workbook.save(file_path)
+    sheet.column_dimensions["A"].width = 30
+    sheet.column_dimensions["B"].width = 30
+    sheet.column_dimensions["C"].width = 30
+    workbook.save(file_path)
+    
 else:
     workbook = Workbook()
     sheet = workbook.active
