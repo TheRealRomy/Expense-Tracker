@@ -1,10 +1,11 @@
 import os
-import customtkinter as ctk
 from datetime import datetime, timedelta
-from openpyxl import Workbook, load_workbook
+
+import customtkinter as ctk
+from openpyxl import Workbook
 from openpyxl import load_workbook
-from openpyxl.styles import Alignment
 from openpyxl.utils import get_column_letter
+
 
 # Functions
 def validate_numeric_input(new_value):
@@ -15,7 +16,8 @@ def validate_numeric_input(new_value):
         return True
     except ValueError:
         return False
-    
+
+
 def on_button_click():
     item_name = item_name_entry_box.get()
     item_price = item_price_entry_box.get()
@@ -28,12 +30,13 @@ def on_button_click():
         sheet[f"A{next_row}"] = item_name
         sheet[f"B{next_row}"] = item_price
         sheet[f"C{next_row}"] = selected_date
-        workbook.save(file_path) 
+        workbook.save(file_path)
         message_label.configure(text="Information noted!")
         main_window.after(2000, lambda: message_label.configure(text=""))
     else:
         message_label.configure(text="Please fill all fields!")
         main_window.after(2000, lambda: message_label.configure(text=""))
+
 
 def day_suffix(day):
     if 4 <= day <= 20 or 24 <= day <= 30:
@@ -41,6 +44,7 @@ def day_suffix(day):
     else:
         suffixes = {1: "st", 2: "nd", 3: "rd"}
         return suffixes.get(day % 10, "th")
+
 
 # Database stuff
 folder_path = "C:/Expense-Tracker"
@@ -54,7 +58,7 @@ else:
     else:
         os.makedirs(folder_path)
         open(file_path, "w").close()
-        
+
 workbook.save(file_path)
 
 sheet = workbook.active
@@ -63,8 +67,8 @@ sheet["B1"] = "Price in ₱"
 sheet["C1"] = "Date of purchase"
 
 column_widths = [20, 20, 20]
-column_range = range(1, 4)  
-row_range = range(1, sheet.max_row + 1) 
+column_range = range(1, 4)
+row_range = range(1, sheet.max_row + 1)
 for col_num, width in enumerate(column_widths, start=1):
     column_letter = get_column_letter(col_num)
     sheet.column_dimensions[column_letter].width = width
@@ -105,11 +109,10 @@ item_price_entry_box.grid(row=0, column=1, padx=13, pady=10, sticky="nsew")
 validate_cmd = (main_window.register(validate_numeric_input), '%P')
 item_price_entry_box.configure(validate='key', validatecommand=validate_cmd)
 
-
 start_date = datetime.now().date()
-end_date = start_date.replace(month=12, day=31)  
-delta = timedelta(days=1) 
-date_list = [] 
+end_date = start_date.replace(month=12, day=31)
+delta = timedelta(days=1)
+date_list = []
 current_date = start_date
 while current_date <= end_date:
     date_list.append(current_date.strftime("%B %d"))
@@ -148,7 +151,6 @@ if start_date.day == last_day_of_month:
     text_to_display = f"By the end of the month ({formatted_date}), you bought {number_of_items} items and spent ₱{total_price} within this month."
 else:
     text_to_display = "It's not the end of the month yet. No need for a report."
-    
 
 text_label = ctk.CTkLabel(master=report_frame, text=text_to_display, wraplength=340, justify="center")
 text_label.pack(pady=10, padx=13)
