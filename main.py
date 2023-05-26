@@ -3,13 +3,13 @@ import customtkinter as ctk
 from datetime import datetime, timedelta
 from openpyxl import Workbook, load_workbook
 from openpyxl import load_workbook
+from openpyxl.styles import Alignment
 from openpyxl.utils import get_column_letter
 
 # Functions
 def validate_numeric_input(new_value):
     if new_value == "":
         return True
-
     try:
         float(new_value)
         return True
@@ -22,52 +22,55 @@ def on_button_click():
     selected_date = date_combobox.get()
 
     if item_name and item_price and selected_date != "Select Date":
-        
-
+        workbook = load_workbook(file_path)
+        sheet = workbook.active
+        next_row = sheet.max_row + 1
+        sheet[f"A{next_row}"] = item_name
+        sheet[f"B{next_row}"] = item_price
+        sheet[f"C{next_row}"] = selected_date
+        workbook.save(file_path) 
         message_label.configure(text="Information noted!")
         main_window.after(2000, lambda: message_label.configure(text=""))
     else:
         message_label.configure(text="Please fill all fields!")
         main_window.after(2000, lambda: message_label.configure(text=""))
 
+def day_suffix(day):
+    if 4 <= day <= 20 or 24 <= day <= 30:
+        return "th"
+    else:
+        suffixes = {1: "st", 2: "nd", 3: "rd"}
+        return suffixes.get(day % 10, "th")
 
 # Database stuff
 folder_path = "C:/Expense-Tracker"
 file_path = f"{folder_path}/Expenses.xlsx"
-
-# Create the folder if it doesn't exist
-if not os.path.exists(folder_path):
-    os.makedirs(folder_path)
-
+workbook = Workbook()
 if os.path.exists(file_path):
     workbook = load_workbook(file_path)
-    sheet = workbook.active
-    headers = ["Item", "Price in ₱", "Date of Purchase"]
-    existing_headers = [sheet.cell(row=1, column=col_num).value for col_num in range(1, sheet.max_column + 1)]
-
-    sheet.column_dimensions["A"].width = 30
-    sheet.column_dimensions["B"].width = 30
-    sheet.column_dimensions["C"].width = 30
-    workbook.save(file_path)
-    
 else:
-    workbook = Workbook()
-    sheet = workbook.active
+    if os.path.exists(folder_path):
+        os.makedirs(file_path)
+    else:
+        os.makedirs(folder_path)
+        open(file_path, "w").close()
+        
+workbook.save(file_path)
 
-    headers = ["Item", "Price in ₱", "Date of Purchase"]
-    for col_num, header in enumerate(headers, start=1):
-        sheet.cell(row=1, column=col_num).value = header
+sheet = workbook.active
+sheet["A1"] = "Item"
+sheet["B1"] = "Price in ₱"
+sheet["C1"] = "Date of purchase"
 
-    footer_labels = ["Total items: ", "Total price: "]
-    for col_num, label in enumerate(footer_labels, start=1):
-        sheet.cell(row=3, column=col_num).value = label
+column_widths = [20, 20, 20]
+column_range = range(1, 4)  
+row_range = range(1, sheet.max_row + 1) 
+for col_num, width in enumerate(column_widths, start=1):
+    column_letter = get_column_letter(col_num)
+    sheet.column_dimensions[column_letter].width = width
 
-    sheet.column_dimensions["A"].width = 30
-    sheet.column_dimensions["B"].width = 30
-    sheet.column_dimensions["C"].width = 30
+workbook.save(file_path)
 
-    workbook.save(file_path)
-    
 # Main window stuff 
 main_window = ctk.CTk()
 ctk.set_appearance_mode("dark")
@@ -131,23 +134,21 @@ report_frame.pack(pady=8, padx=13, fill="both", expand=True)
 last_day_of_month = (start_date.replace(day=1, month=start_date.month + 1) - timedelta(days=1)).day
 text_to_display = ""
 
-new_workbook = load_workbook(file_path)
-new_worksheet = new_workbook.active
-item_column = new_worksheet["A"]
-number_of_items = 0
-price_column = new_worksheet["B"]
-total_price = 0
+report_workbook = load_workbook(file_path)
+report_sheet = report_workbook.active
+
+item_count = report_sheet["A"]
+number_of_items = sum(1 for cell in item_count if cell.value is not None) - 1
+
+item_price_range = report_sheet["B"][1:]
+total_price = sum(float(cell.value) for cell in item_price_range if cell.value is not None)
 
 if start_date.day == last_day_of_month:
-    number_of_items = sum(1 for cell in item_column if cell.value is not None) - 2
-
-    for cell in price_column[2:]:
-        if isinstance(cell.value, (int, float)):
-            total_price += cell.value
-
-    text_to_display = f"By the end of the month ({start_date}), you bought {number_of_items} items and spent ₱{total_price} within this month."
+    formatted_date = start_date.strftime("%d{suffix} of %B, %Y").format(suffix=day_suffix(start_date.day))
+    text_to_display = f"By the end of the month ({formatted_date}), you bought {number_of_items} items and spent ₱{total_price} within this month."
 else:
-    text_to_display = "It's not the end of the month yet."
+    text_to_display = "It's not the end of the month yet. No need for a report."
+    
 
 text_label = ctk.CTkLabel(master=report_frame, text=text_to_display, wraplength=340, justify="center")
 text_label.pack(pady=10, padx=13)
