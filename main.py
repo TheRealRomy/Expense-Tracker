@@ -78,6 +78,7 @@ workbook.save(file_path)
 # Main window stuff 
 main_window = ctk.CTk()
 ctk.set_appearance_mode("dark")
+ctk.set_default_color_theme("green")
 main_window.title("Tkinter GUI")
 screen_width = main_window.winfo_screenwidth()
 screen_height = main_window.winfo_screenheight()
